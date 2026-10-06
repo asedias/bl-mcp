@@ -339,6 +339,8 @@ def status():
 def run_python(code, session=None, reset=False, paths=()):
     import sys
 
+    if os.environ.get("BL_MCP_NO_PYTHON", "") not in ("", "0", "false"):
+        raise ValueError("run_python is off in this Blender (BL_MCP_NO_PYTHON). Use the typed tools.")
     for path in paths:
         if path not in sys.path:
             sys.path.insert(0, path)

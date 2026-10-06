@@ -1,4 +1,5 @@
 import json
+import os
 import time
 
 from mcp.server.fastmcp import FastMCP, Image
@@ -43,6 +44,8 @@ class Server(FastMCP):
 def instructions():
     off = [name for name in toolsets.DEFAULT if name not in toolsets.chosen()]
     note = f"\nToolsets switched off by BL_MCP_TOOLSETS: {', '.join(off)}. Their tools are not offered; status lists them.\n" if off else ""
+    if os.environ.get("BL_MCP_NO_PYTHON", "") not in ("", "0", "false"):
+        note += "\nrun_python is switched off (BL_MCP_NO_PYTHON): only the typed tools are available.\n"
     return INSTRUCTIONS + note
 
 

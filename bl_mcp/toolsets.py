@@ -56,7 +56,7 @@ ADDITIVE = {
     "rock", "scatter", "render_final", "job_status",
 }
 
-state = {"known": set(), "on": list(DEFAULT), "off": []}
+state = {"known": set(), "on": list(DEFAULT), "off": [], "no_python": False}
 
 
 def chosen(value=None):
@@ -94,6 +94,9 @@ def apply(mcp):
     state["on"] = chosen()
     state["off"] = [name for name in DEFAULT if name not in state["on"]]
     kept = {name for toolset in state["on"] for name in TOOLSETS[toolset]}
+    state["no_python"] = os.environ.get("BL_MCP_NO_PYTHON", "") not in ("", "0", "false")
+    if state["no_python"]:
+        kept.discard("run_python")
     for name, tool in registered.items():
         if name not in kept:
             mcp.remove_tool(name)
@@ -109,6 +112,8 @@ def apply(mcp):
 def report():
     """What `status` says about toolsets, so the agent knows which tools exist but are off."""
     info = {"on": state["on"]}
+    if state.get("no_python"):
+        info["run_python"] = "off (BL_MCP_NO_PYTHON): only the typed tools are available"
     if state["off"]:
         info["off"] = {name: TOOLSETS[name] for name in state["off"]}
         info["note"] = "Tools of the sets that are off are not offered. Set BL_MCP_TOOLSETS (comma list, or unset for all) and restart the MCP server."
