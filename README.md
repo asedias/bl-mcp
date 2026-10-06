@@ -20,7 +20,7 @@ find_floating {"names": [...9 parts], "ground_z": 0}
 {"parts": 9, "connected_groups": 1, "floating": ["none"], "tiny_gaps": ["none"]}
 ```
 
-The lantern was built, textured, lit and rendered by an agent through these tools. The run, with its numbers, is in [docs/demos.md](docs/demos.md).
+The lantern was built, textured, lit and rendered by an agent through these tools; a level blockout with routes, sightlines and a passed spec is the second demo. Both runs, with their numbers, are in [docs/demos.md](docs/demos.md).
 
 ## Contents
 
@@ -122,7 +122,7 @@ The recipes stay in the server; the skill only points at them, so both never dis
 |---|---|
 | [docs/tools.md](docs/tools.md) | every tool by set, units and conventions, background jobs, how Blender is found |
 | [docs/limits.md](docs/limits.md) | what the tools cannot do and the traps worth knowing |
-| [docs/demos.md](docs/demos.md) | where the tools come from; the lantern demo with its call and token counts |
+| [docs/demos.md](docs/demos.md) | where the tools come from; the lantern and the level blockout demos with their call counts |
 | [docs/comparison.md](docs/comparison.md) | bl-mcp next to mcp-for-blender, Blender Lab MCP and blender-ai-mcp |
 | [docs/development.md](docs/development.md) | parts of the code, adding a tool, tests, CI and releases |
 
