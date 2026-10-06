@@ -1,0 +1,15 @@
+--- measure {"names": ["lamp_base", "lamp_glass"]}
+[{"name": "lamp_base", "type": "MESH", "parent": null, "size": [0.17, 0.17, 0.118], "min": [-0.085, -0.085, 0.0], "max": [0.085, 0.085, 0.118], "center": [0.0, 0.0, 0.059], "origin": [0.0, 0.0, 0.059], "origin_in_bbox": [0.5, 0.5, 0.5], "rotation_deg": [0.0, -0.0, 0.0], "scale": [1.0, 1.0, 1.0], "notes": []}, {"name": "lamp_glass", "type": "MESH", "parent": null, "size": [0.108, 0.108, 0.122], "min": [-0.054, -0.054, 0.1], "max": [0.054, 0.054, 0.222], "center": [0.0, 0.0, 0.161], "origin": [0.0, 0.0, 0.161], "origin_in_bbox": [0.5, 0.5, 0.5], "rotation_deg": [0.0, -0.0, 0.0], "scale": [1.0, 1.0, 1.0], "notes": []}]
+
+--- check_mesh {"name": "lamp_base"}
+{"name": "lamp_base", "tris": 3528, "ngons": 13, "closed": true, "volume": 0.0018, "materials": 1, "issues": ["none"], "uv": {"islands": 48, "uv_area_used": 0.526, "faces_outside_0_1": 0, "degenerate_uv_faces": 0, "texel_density_spread": 1.86, "texel_density_note": "ratio of the largest to the smallest UV area per surface area; 1 is even, above 4 is stretched or uneven"}}
+
+--- bevel_edges {"object": "lamp_base", "width": 0.002, "segments": 2}
+{"object": "lamp_base", "size": [0.17, 0.17, 0.118], "tris": 2880, "bevelled": 480, "width": 0.002, "width_type": "offset", "achieved_width": {"min": 0.002, "median": 0.002, "measured_as": "offset", "edges_measured": 480}, "clamped": 0}
+
+--- boolean {"a": "lamp_cap", "b": "lamp_vent", "operation": "difference"}
+{"object": "lamp_cap", "size": [0.14, 0.14, 0.044], "tris": 1120, "operation": "difference", "solver": "EXACT"}
+
+--- find_floating {"names": ["lamp_base", "lamp_cap", "lamp_ribs", "lamp_handle", "lamp_pivot_L", "lamp_pivot_R", "lamp_knob", "lamp_glass", "lamp_flame"], "ground_z": 0.0}
+{"parts": 9, "connected_groups": 1, "main_group": ["lamp_base", "lamp_cap", "lamp_flame", "lamp_glass", "lamp_handle", "lamp_knob", "lamp_pivot_L", "lamp_pivot_R", "lamp_ribs"], "main_group_size": 9, "floating": ["none"], "tiny_gaps": ["none"], "note": "connected means overlapping or gap <= 0.001 m (less for a pair under 0.3 m); tiny_gaps are wider gaps up to 2% of the size of the pair, at most 0.03 m"}
+

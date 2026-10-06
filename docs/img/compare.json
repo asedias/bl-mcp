@@ -1,0 +1,50 @@
+{
+  "view": "front",
+  "iou_registered": 0.8144,
+  "iou_outline": 0.8144,
+  "reference_size_m": [
+    0.182,
+    0.301
+  ],
+  "model_size_m": [
+    0.1955,
+    0.301
+  ],
+  "worst_bands": [
+    {
+      "z0": 0.0,
+      "z1": 0.025,
+      "model_width": 0.196,
+      "reference_width": 0.17,
+      "delta_m": 0.026,
+      "delta_pct": 15.3,
+      "shift_m": -0.006,
+      "verdict": "model wider"
+    },
+    {
+      "z0": 0.025,
+      "z1": 0.05,
+      "model_width": 0.196,
+      "reference_width": 0.182,
+      "delta_m": 0.014,
+      "delta_pct": 7.7,
+      "shift_m": 0.0,
+      "verdict": "ok"
+    },
+    {
+      "z0": 0.05,
+      "z1": 0.075,
+      "model_width": 0.196,
+      "reference_width": 0.182,
+      "delta_m": 0.014,
+      "delta_pct": 7.7,
+      "shift_m": 0.0,
+      "verdict": "ok"
+    }
+  ],
+  "inner_detail": {
+    "edge_agreement": 0.2954,
+    "reference_edges_matched": 0.8175,
+    "model_edges_matched": 0.1803
+  }
+}

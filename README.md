@@ -1,10 +1,68 @@
 # bl-mcp
 
-MCP server for a live Blender. It gives an AI agent tools to build, measure, check and look at a model, not only to run raw `bpy` code.
+**Blender for AI agents, with numbers instead of guesses.** An MCP server plus a Blender add-on: 113 typed tools that build, measure, check, compare and render in a live Blender. Every tool answers with what it really did, and the mesh tools refuse instead of leaving an open or broken mesh.
 
-## Why
+Most Blender MCP servers give the agent one `execute_code` tool and a screenshot. That is enough to make something, and not enough to make it right: the agent cannot see 3D, and a part that sits 3 cm off produces no error. bl-mcp turns those mistakes into numbers and pictures the agent reads after every step.
 
-Raw `bpy` access has two problems. The agent cannot see 3D, and a wrong move of 3 cm gives no error. These tools make such mistakes visible as numbers and images, and give the agent safe operations in world units. Every tool that changes geometry reports what it really did: achieved widths, open edges, parts it could not process.
+![A brass lantern built by an agent with the tools: Cycles render](docs/img/final.png)
+
+| `render_sheet`: the overview the agent gets after each step | `compare_view`: reference, model, overlay, difference |
+|---|---|
+| ![render_sheet](docs/img/sheet.png) | ![compare_view](docs/img/compare.png) |
+
+What the agent reads instead of a screenshot:
+
+```
+bevel_edges {"object": "lamp_base", "width": 0.002, "segments": 2}
+{"bevelled": 480, "width": 0.002, "achieved_width": {"min": 0.002, "median": 0.002}, "clamped": 0, "tris": 2880}
+
+find_floating {"names": [...9 parts], "ground_z": 0}
+{"parts": 9, "connected_groups": 1, "floating": ["none"], "tiny_gaps": ["none"]}
+
+compare_view {"reference": "lantern_front.png", "view": "front", "height_m": 0.301}
+{"iou_registered": 0.8144, "worst_bands": [{"z0": 0, "z1": 0.025, "model_width": 0.196, "reference_width": 0.17, "delta_pct": 15.3, "verdict": "model wider"}]}
+```
+
+The lantern above was built, textured, lit and rendered by an agent (Claude Fable 5.1) through these tools in one session of 163 model calls and 106 tool calls (18 k output tokens); the first version had a handle 3 mm above its pivots, which `find_floating` now catches before the render. The script is `tests/readme_images.py`, the scene is `docs/demo/lantern.blend`.
+
+## What it does
+
+- **Builds in world units.** Primitives, profiles, lathe, sweep, arrays, booleans, bevels, sculpting by numbers. Metres, Z up, no hidden scale.
+- **Measures and checks.** `measure`, `check_mesh`, `check_symmetry`, `find_floating`, `check_contacts`, `assert_spec` (a spec of sizes, ratios, gaps and symmetry the agent runs after every change).
+- **Compares with references.** Masks and outlines from reference sheets, silhouette IoU per view with a band table and an overlay, automatic fit of parts, camera matching for photos.
+- **Refuses to break the mesh.** `boolean` cleans and checks its result and tries other solvers; `weld` names a safe distance; `bevel_edges` reports the width it really achieved.
+- **Ships to a game.** Materials with maps, procedural materials baked to textures, `check_game_ready`, GLB export with a texture size limit, inspection of the written file.
+- **Levels.** Blockout from a text plan, walkability, routes, passage widths, sightlines, scatter, terrain.
+- **Knows the workflow.** `recipe` serves step-by-step recipes (character, prop, weapon from a sheet, scene from a photo, level, materials, export) with the traps found in real agent sessions.
+- **Stays usable.** Long tools run as background jobs in Blender; `checkpoint`, `diff_since` and `rollback` make experiments cheap.
+
+## Where it comes from
+
+bl-mcp was not designed as a tool catalogue. It grew while an agent built real game assets in Blender: a character from front and side references, props, a pistol from an orthographic sheet, level blockouts for a game. Each round went the same way: an agent session, a report of where it fell back to raw Python, where a tool lied by omission and where the result was wrong without anyone noticing. Then the tools were changed and the next session ran against them. The recipes are the distilled logs of those sessions, traps included.
+
+Every tool has a headless test of its handler and a smoke call through the real MCP server, and the server refuses to start when a tool has no toolset. Tools that no session needed were merged or removed.
+
+## How it compares
+
+Facts from the projects' own READMEs and tool lists, read on 2026-10-06. Corrections welcome.
+
+| | bl-mcp | [mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) (ahujasid) | [Blender Lab MCP](https://projects.blender.org/lab/blender_mcp) | [blender-ai-mcp](https://github.com/PatrykIti/blender-ai-mcp) (PatrykIti) |
+|---|---|---|---|---|
+| How the agent acts | typed tools; `run_python` as the last resort | writes Blender Python (`execute_blender_code`) | Blender Python plus read-only tools | typed tools; Python only in a read-only code mode |
+| Tools | 113 in 7 toolsets | 9 | 27 | about 190, a small profile by default |
+| Numbers about geometry | `measure`, `check_mesh`, `check_symmetry`, `assert_spec` | no | no | `scene_measure_*`, `scene_assert_dimensions` |
+| Comparison with a reference | silhouette IoU per view, band table, overlay, auto fit, camera matching | no | no | reference checkpoints scored by a vision model, silhouette metrics |
+| Mesh safety | `boolean` and `weld` check their result and refuse to open a mesh; `repair_mesh` | no | no | `mesh_inspect`; no refusal stated |
+| Export for games | `check_game_ready`, GLB export with texture limit, `inspect_glb` | no | no | `export_glb`, `import_glb`, FBX, OBJ |
+| Asset libraries, AI generation | no | Poly Haven, Sketchfab, Poly Pizza, Tripo, Hyper3D, Hunyuan3D | no | no |
+| Long operations | background jobs inside Blender | not stated | a second Blender process, synchronous | async wrappers |
+| Workflow knowledge | `recipe` tool and prompts | no | API and manual search tools | goal router |
+| Blender | 5.0+ | 3.0+ | 5.1+ | 4.0+ |
+| License | MIT | MIT | GPL-3.0-or-later | Apache-2.0 |
+| Telemetry | none | anonymous usage on by default, content opt-in | none stated | none stated |
+
+Pick mcp-for-blender when you want asset search and model generation with the least set-up. Pick Blender Lab when you want the official add-on and documentation search. Pick bl-mcp when the agent must build to measure and ship a clean mesh.
+
 
 ## Install
 
@@ -38,7 +96,9 @@ The server alone also runs without a clone: `uvx --from git+https://github.com/a
 
 The agent calls `status` first. It shows both versions, compares the tools of the server with the handlers of the add-on, and says which side to restart when they differ. When Blender is not open it says where Blender is installed.
 
-The server and the add-on talk by JSON lines on `127.0.0.1:9877`. Set `BL_MCP_PORT` on both sides to change the port. The socket listens on localhost only.
+The server and the add-on talk by JSON lines on `127.0.0.1:9877`. Set `BL_MCP_PORT` on both sides to change the port.
+
+**Security.** The add-on listens on localhost only, without authentication: any local process can connect and run `run_python`, which executes arbitrary Python inside your Blender. This is the purpose of the tool, and the same trust you give the MCP client. Do not run it on a shared machine, and keep the port closed in your firewall. No data leaves the machine: there is no telemetry, no cloud service, no asset download.
 
 ## Toolsets
 
