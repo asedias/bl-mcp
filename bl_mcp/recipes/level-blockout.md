@@ -15,13 +15,13 @@ Use for a grey-box level. The tools measure. They do not tell if the level is fu
 2. Plan: `build_from_grid(layout=, cell=1.0, name=)`. One string per row; row 0 is the +Y side. Characters: '#' wall, '.' floor, 'D' door, 'C' cover, 'S' spawn, 'O' objective, ' ' nothing. `legend` adds characters, for example low walls.
 3. Without a plan: floor and walls as big boxes from `create_primitive`. Name them by zone: hall_floor, hall_wall_N.
 4. Windows: `boolean` with a box cutter. Raised parts and steps: `extrude_faces`.
-5. `walkable_map`: read the reachable and the unreachable area and look at the map. Every room, spawn and objective must be in the reachable area.
+5. `walkable_map`: read the reachable and the unreachable area and look at the map. `largest_regions` names the floor height of each region: an unreachable region on a roof or a crate top is normal. `probe` with the spawn, objective and chokepoint points gives reachable and free width per point. Every room, spawn and objective must be reachable.
 6. `route(start=, end=)` between the key points. Compare the length with the straight-line length. Read the narrowest width and its position. `min_width` tests a wide group.
 7. `check_passages`: doors and corridors under the limits, with positions. Fix them and call it again.
 8. `sightline_map`: red areas are exposed. Read the longest sight lines and their positions. Break a long line with cover or a corner.
 9. `viewshed(point=)` from each spawn: what an enemy sees from there. Check key pairs with `line_of_sight(a=, b=)`.
 10. Dress the level: `scatter(source=, surface=, count=, seed=, min_distance=)` for trees, rocks, crates. `place_on` for single props. Then repeat steps 5 to 9: props block routes.
-11. Look from above: `render_sheet` with the top view. Look as a player: `set_camera(location=, look_at=)` at 1.6 m above a spawn, then `render_final(path=, engine='workbench')`.
+11. Look from above: `render_sheet` with the top view. Look as a player: `render_view(eye=, look_at=, fov=70, isolate=false)` with `eye` 1.6 m above a spawn and `look_at` the first corner the player sees. A view framed on a building from outside the map shows only a wall.
 12. `save_spec` with the rules of the level (types connected, size, gap, budget). Call `run_spec` after each round.
 13. Change one thing per round. Double or halve a doubtful value. Then repeat steps 5 to 9.
 14. `check_game_ready` with the limits, then the recipe `export-for-game`.

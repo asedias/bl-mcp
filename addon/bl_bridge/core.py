@@ -2120,7 +2120,7 @@ def camera_fit(cloud, center, direction, fov, margin):
 
 
 @handler
-def render_view(target=None, azimuth=35.0, elevation=20.0, fov=35.0, mode="solid", size=512, isolate=True, margin=1.15, look_at=None, name="view"):
+def render_view(target=None, azimuth=35.0, elevation=20.0, fov=35.0, mode="solid", size=512, isolate=True, margin=1.15, look_at=None, name="view", eye=None):
     modes = {"solid", "clay", "xray", "flat", "ids", "wire", *EEVEE_LOOKS}
     if mode not in modes:
         raise ValueError(f"Unknown mode {mode!r}. Known: {sorted(modes)}")
@@ -2129,10 +2129,21 @@ def render_view(target=None, azimuth=35.0, elevation=20.0, fov=35.0, mode="solid
     depsgraph = bpy.context.evaluated_depsgraph_get()
     cloud = np.vstack([points_of(o, depsgraph) for o in framed])
     center = Vector(look_at) if look_at is not None else Vector((cloud.min(axis=0) + cloud.max(axis=0)) / 2)
-    el = math.radians(max(-89.5, min(89.5, elevation)))
-    az = math.radians(azimuth)
-    direction = Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el)))
-    distance, ortho_scale = camera_fit(cloud, center, direction, fov, margin)
+    if eye is not None:
+        # A camera standing at a world point: no framing, perspective only.
+        if look_at is None:
+            raise ValueError("eye needs look_at: the point the camera looks at")
+        if not fov:
+            raise ValueError("eye needs a perspective fov (not 0)")
+        offset = Vector(eye) - center
+        if offset.length < 1e-6:
+            raise ValueError("eye and look_at are the same point")
+        direction, distance, ortho_scale = offset.normalized(), offset.length, None
+    else:
+        el = math.radians(max(-89.5, min(89.5, elevation)))
+        az = math.radians(azimuth)
+        direction = Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el)))
+        distance, ortho_scale = camera_fit(cloud, center, direction, fov, margin)
 
     legend, saved_colors, copies = None, {}, []
     look = {"solid": "material"}.get(mode, mode)

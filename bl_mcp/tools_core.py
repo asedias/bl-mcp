@@ -334,6 +334,7 @@ def render_view(
     margin: float = 1.15,
     look_at: Vec3 | None = None,
     name: str = "view",
+    eye: Vec3 | None = None,
 ) -> list:
     """Close-up picture for checking: one free angle with its own camera and light, no set-up needed. The camera frames the bounding volume of `target`
     (with children; empty means everything), so a tall figure and a small bolt both fill the picture. Azimuth 0 looks
@@ -342,11 +343,12 @@ def render_view(
     context. Modes: solid (studio light, material colours), clay (one grey, shows form only), xray (see-through),
     flat (material colours without light), wire (edges: topology, hidden parts; lines are about 2 pixels wide at the
     centre of the frame at any zoom), ids (one flat colour per object, with a legend), normals (world normal as
-    colour), backfaces (red where you see the inside of a face: flipped normals, open shells). Use render_sheet for
-    the overview with a metre grid, render_final for the scene lights, materials and camera."""
+    colour), backfaces (red where you see the inside of a face: flipped normals, open shells). `eye` puts the camera at a world point looking at `look_at` with `fov`
+    (no framing): a player's view from a spawn at eye height, a look through a doorway. Use render_sheet for the
+    overview with a metre grid, render_final for the scene lights, materials and camera."""
     result = call(
         "render_view", target=target, azimuth=azimuth, elevation=elevation, fov=fov, mode=mode, size=size,
-        isolate=isolate, margin=margin, look_at=look_at and list(look_at), name=name,
+        isolate=isolate, margin=margin, look_at=look_at and list(look_at), name=name, eye=eye and list(eye),
     )
     return sheet(result)
 

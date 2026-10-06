@@ -154,4 +154,21 @@ expect("save_blend keeps current file", bpy.data.filepath == before_path, bpy.da
 call("save_blend", {"path": str(out / "current.blend"), "make_current": True})
 expect("make_current renames", bpy.data.filepath.endswith("current.blend"))
 
+# render_view from a standing point: the wall in front fills the picture, the box behind it does not show
+box("wall_front", (6.0, 0.3, 3.0), (0, 2, 1.5))
+box("behind", (1.0, 1.0, 1.0), (0, 6, 0.5))
+seen = call("render_view", {"eye": [0, -1, 1.6], "look_at": [0, 6, 1.6], "fov": 60, "mode": "ids", "size": 128, "name": "eye_view", "isolate": False})
+expect("a view from a point reports the camera at that point", [round(v, 2) for v in seen["camera_at"]] == [0.0, -1.0, 1.6], seen["camera_at"])
+pixels = handlers.read_pixels(seen["path"])
+colours = {tuple((pixels[y, x, :3] * 255).astype(int) // 32) for y in range(0, 128, 8) for x in range(0, 128, 8)}
+expect("the wall in front hides the box behind", len(colours) <= 3, len(colours))
+refused = False
+try:
+    call("render_view", {"eye": [0, -1, 1.6], "size": 64})
+except ValueError:
+    refused = True
+expect("eye without look_at is refused", refused)
+call("delete", {"names": ["wall_front", "behind"]})
+
+
 finish()
