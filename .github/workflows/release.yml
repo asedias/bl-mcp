@@ -1,0 +1,26 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check that the tag matches the add-on and package versions
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          addon="$(python3 -c "import re; s=open('addon/bl_bridge/__init__.py').read(); print('.'.join(re.search(r'\"version\": \((\d+), (\d+), (\d+)\)', s).groups()))")"
+          package="$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          test "$tag" = "$addon" -a "$tag" = "$package" || { echo "tag $tag, add-on $addon, package $package"; exit 1; }
+      - name: Zip the add-on for Install from Disk
+        run: (cd addon && zip -r "../bl_bridge-${GITHUB_REF_NAME}.zip" bl_bridge -x '*/__pycache__/*')
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "bl_bridge-${GITHUB_REF_NAME}.zip" --title "$GITHUB_REF_NAME" --generate-notes
