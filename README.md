@@ -130,6 +130,16 @@ The agent sees only the server instructions and the tool descriptions. Step-by-s
 
 Topics: `rules`, `character-from-reference`, `prop-hard-surface`, `weapon-from-sheet`, `scene-from-photo`, `level-blockout`, `materials-and-render`, `export-for-game`.
 
+## Skill for Claude Code
+
+`skills/bl-mcp/SKILL.md` tells the agent when to use the server, how to start (`status`, `scene_tree`, `recipe`) and the rules that hold for every task. Copy the folder into `.claude/skills/` of a project (or `~/.claude/skills/` for all projects):
+
+```
+cp -r /path/to/bl-mcp/skills/bl-mcp .claude/skills/
+```
+
+The recipes stay in the server; the skill only points at them, so both never disagree.
+
 ## Tools
 
 Units are metres, coordinates are world coordinates, Z is up, the front faces -Y. Anchors are fractions of a world bounding box: `(0.5, 0.5, 0)` is the bottom centre. `where` picks faces by a condition: `normal` ('+Z' or a vector) with `angle`, `x`/`y`/`z` ranges, `box`, `area`, `index`.
