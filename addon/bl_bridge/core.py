@@ -1792,14 +1792,14 @@ def base_colors(grid, home):
 
 
 @handler
-def walkable_map(names=None, cell=None, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, start=None, max_levels=3):
+def walkable_map(names=None, cell=None, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, start=None, max_levels=3, probe=None):
     grid = build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels)
     home = home_region(grid, start)
     path, _ = save_grid_image(grid, base_colors(grid, home), "walkable.png")
     cell = grid["cell"]
     area = cell * cell
     regions = sorted(range(len(grid["regions"])), key=lambda i: -len(grid["regions"][i]))
-    return {
+    result = {
         "image": str(path),
         "legend": "green reachable, yellow walkable but not reachable, red blocked (solid, low ceiling or too close to a wall), dark no floor. +Y is up in the image.",
         "grid": f"{grid['nx']}x{grid['ny']} cells of {cell} m, lower-left corner at {rvec(grid['lo'][:2], 3)}",
@@ -1810,6 +1810,25 @@ def walkable_map(names=None, cell=None, agent_height=1.8, agent_radius=0.3, max_
         "largest_regions": [region_summary(grid, i, area, i == home) for i in regions[:5]],
         "note": "A walkable region that is not reachable is often the top of a solid (a roof, a crate, a wall top): its floor_z tells.",
     }
+    if probe:
+        result["probes"] = probe_points(grid, home, probe, agent_radius)
+    return result
+
+
+def probe_points(grid, home, points, agent_radius):
+    """Reachability, floor height and free width at given world points, so the agent need not read the picture."""
+    clear = clearance_map(grid, home)
+    out = []
+    for point in points:
+        point = list(point) + [0.0] * (3 - len(point))
+        try:
+            key = nearest_node(grid, point, within=1)
+        except ValueError:
+            out.append({"at": rvec(point[:2], 2), "walkable": False})
+            continue
+        width = (2 * clear[key[0], key[1]] - 1) * grid["cell"] + 2 * agent_radius if grid["label"][key] == home else 0.0
+        out.append({"at": rvec(point[:2], 2), "walkable": True, "reachable": grid["label"][key] == home, "floor_z": rnd(grid["nodes"][key], 2), "free_width_m": rnd(max(width, 0.0), 2)})
+    return out
 
 
 def region_summary(grid, index, area, reachable):

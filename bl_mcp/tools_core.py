@@ -404,7 +404,7 @@ def walkable_map(
     prove that every room, spawn and objective connects."""
     result = call(
         "walkable_map", names=names, cell=cell, agent_height=agent_height, agent_radius=agent_radius,
-        max_step=max_step, max_slope_deg=max_slope_deg, start=start and list(start), max_levels=max_levels,
+        max_step=max_step, max_slope_deg=max_slope_deg, start=start and list(start), max_levels=max_levels, probe=probe and [list(p) for p in probe],
     )
     return [text(result), Image(path=result["image"])]
 

@@ -132,6 +132,8 @@ except ValueError as error:
     expect("a too fine cell is refused with a suggestion", "cell=0.6" in str(error), str(error))
 call("delete", {"names": ["wide_ground"]})
 walk = call("walkable_map", {"cell": 0.4, "start": [-3, 0, 0]})
+probed = call("walkable_map", {"cell": 0.4, "start": [-3, 0, 0], "probe": [[-3, 0], [-3, 0, 0], [100, 100]]})
+expect("probes give free width and reachability", probed["probes"][0]["reachable"] and probed["probes"][0]["free_width_m"] > 1 and probed["probes"][2]["walkable"] is False, probed["probes"])
 expect("walkable regions carry floor height and box", walk["largest_regions"][0]["reachable"] and len(walk["largest_regions"][0]["floor_z"]) == 2 and len(walk["largest_regions"][0]["box"]) == 2, walk["largest_regions"])
 expect("doorway joins both rooms", walk["reachable_area_m2"] > 90, walk)
 path = call("route", {"start": [-3, 0, 0], "end": [3, 0, 0], "cell": 0.4})
