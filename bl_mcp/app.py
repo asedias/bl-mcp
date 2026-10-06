@@ -59,7 +59,7 @@ def text(result):
 
 
 def sheet(result):
-    return [text({k: v for k, v in result.items() if k != "path"}), Image(path=result["path"])]
+    return [text(result), Image(path=result["path"])]
 
 
 def registry_gaps(handlers):

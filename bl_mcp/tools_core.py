@@ -399,12 +399,14 @@ def walkable_map(
 ) -> list:
     """Check where an agent of this size can walk, then flood from `start` (default: the largest area). Floors are
     found by rays, so ramps, stairs and several levels work. Returns the reachable, unreachable and blocked areas
-    in m2 and a top-down image. Use it to prove that every room, spawn and objective connects."""
+    in m2 and a top-down image. `largest_regions` gives each region's area, whether it is reachable, its floor height
+    range and its box: an unreachable region with a high floor_z is a roof or a crate top, not a design error. Use it to
+    prove that every room, spawn and objective connects."""
     result = call(
         "walkable_map", names=names, cell=cell, agent_height=agent_height, agent_radius=agent_radius,
         max_step=max_step, max_slope_deg=max_slope_deg, start=start and list(start), max_levels=max_levels,
     )
-    return [text({k: v for k, v in result.items() if k != "image"}), Image(path=result["image"])]
+    return [text(result), Image(path=result["image"])]
 
 
 @mcp.tool()
@@ -422,7 +424,7 @@ def sightline_map(
     area that has a sight line longer than `long_sightline`. Use it to find sniper alleys and to check that
     cover and corners break long views. Same agent settings as walkable_map."""
     result = call("sightline_map", names=names, cell=cell, eye_height=eye_height, rays=rays, max_range=max_range, long_sightline=long_sightline, start=start and list(start))
-    return [text({k: v for k, v in result.items() if k != "image"}), Image(path=result["image"])]
+    return [text(result), Image(path=result["image"])]
 
 
 @mcp.tool()
@@ -444,7 +446,7 @@ def route(
     result = call("route", start=list(start), end=list(end), names=names, cell=cell, min_width=min_width, agent_height=agent_height, agent_radius=agent_radius, max_step=max_step, max_slope_deg=max_slope_deg)
     if "image" not in result:
         return [text(result)]
-    return [text({k: v for k, v in result.items() if k != "image"}), Image(path=result["image"])]
+    return [text(result), Image(path=result["image"])]
 
 
 @mcp.tool()

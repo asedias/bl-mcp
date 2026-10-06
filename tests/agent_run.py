@@ -58,18 +58,22 @@ class Chat:
 
     def ask(self, messages, tools):
         body = {"model": self.model, "messages": messages, "tools": tools, "tool_choice": "auto", "temperature": 0.2}
-        for attempt in range(4):
+        last = None
+        for attempt in range(8):
             try:
                 response = self.client.post(self.url, headers=self.headers, json=body)
             except httpx.HTTPError as error:
-                print(f"request failed ({error.__class__.__name__}), retry {attempt + 1}", flush=True)
-                time.sleep(10 * (attempt + 1))
-                continue
-            if response.status_code < 500 and response.status_code != 429:
-                break
-            time.sleep(5 * (attempt + 1))
+                last = error.__class__.__name__
+            else:
+                if response.status_code < 500 and response.status_code != 429:
+                    break
+                last = f"{response.status_code}: {response.text[:200]}"
+            # A network outage can last minutes: wait up to 5 minutes between attempts.
+            pause = min(300, 15 * 2**attempt)
+            print(f"request failed ({last}), retry {attempt + 1} in {pause} s", flush=True)
+            time.sleep(pause)
         else:
-            raise RuntimeError("the model endpoint did not answer four times")
+            raise RuntimeError(f"the model endpoint did not answer eight times; last: {last}")
         if response.status_code != 200:
             raise RuntimeError(f"{response.status_code}: {response.text[:800]}")
         data = response.json()
@@ -90,8 +94,7 @@ async def call_tool(session, name, arguments, with_images):
     return text, images, bool(result.isError)
 
 
-async def loop(args, chat, session, tools, messages, log):
-    calls, errors = 0, 0
+async def loop(args, chat, session, tools, messages, log, counts):
     for step in range(args.max_steps):
         trim_old_results(messages, args.keep_recent)
         message = chat.ask(messages, tools)
@@ -100,7 +103,7 @@ async def loop(args, chat, session, tools, messages, log):
         if message.get("content"):
             print(f"[{step}] model: {message['content'][:300].replace(chr(10), ' ')}", flush=True)
         if not tool_calls:
-            return calls, errors
+            return
         pictures = []
         for call in tool_calls:
             name = call["function"]["name"]
@@ -111,8 +114,8 @@ async def loop(args, chat, session, tools, messages, log):
                 arguments, text, images, is_error = {}, f"arguments are not JSON: {error}", [], True
             else:
                 text, images, is_error = await call_tool(session, name, arguments, args.images)
-            calls += 1
-            errors += is_error
+            counts["calls"] += 1
+            counts["errors"] += is_error
             print(f"[{step}] {'FAIL' if is_error else 'ok  '} {name} {json.dumps(arguments)[:120]} -> {text[:100].replace(chr(10), ' ')}", flush=True)
             log.write(json.dumps({"step": step, "tool": name, "arguments": arguments, "error": is_error, "result": text[:4000], "images": len(images), "seconds": round(time.time() - t0, 2)}) + "\n")
             log.flush()
@@ -121,7 +124,6 @@ async def loop(args, chat, session, tools, messages, log):
         if pictures:
             messages.append({"role": "user", "content": [{"type": "text", "text": f"Pictures returned by the last tools ({len(pictures)})."}, *pictures[:4]]})
     print("step limit reached", flush=True)
-    return calls, errors
 
 
 async def run(args):
@@ -134,7 +136,7 @@ async def run(args):
     forwarded = {k: os.environ[k] for k in ("BL_MCP_PORT", "BL_MCP_WORK", "BL_MCP_TOOLSETS") if k in os.environ}
     params = StdioServerParameters(command="uv", args=["run", "--project", str(HERE.parent), "bl-mcp"], env=forwarded or None)
     started = time.time()
-    calls, errors, failure, messages = 0, 0, None, []
+    counts, failure, messages = {"calls": 0, "errors": 0}, None, []
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             init = await session.initialize()
@@ -142,7 +144,7 @@ async def run(args):
             system = (init.instructions or "") + ("\n\n" + Path(args.skill).read_text() if args.skill else "")
             messages += [{"role": "system", "content": system}, {"role": "user", "content": task}]
             try:
-                calls, errors = await loop(args, chat, session, tools, messages, log)
+                await loop(args, chat, session, tools, messages, log, counts)
             except Exception as error:  # the summary is written even when the run breaks
                 failure = f"{error.__class__.__name__}: {error}"
                 print("run failed:", failure, flush=True)
@@ -152,8 +154,8 @@ async def run(args):
         "requests": chat.usage["requests"],
         "prompt_tokens": chat.usage["prompt_tokens"],
         "completion_tokens": chat.usage["completion_tokens"],
-        "tool_calls": calls,
-        "tool_errors": errors,
+        "tool_calls": counts["calls"],
+        "tool_errors": counts["errors"],
         "minutes": round((time.time() - started) / 60, 1),
         "final_message": messages[-1].get("content") if messages else None,
     }

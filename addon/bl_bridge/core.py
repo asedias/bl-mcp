@@ -1787,7 +1787,7 @@ def walkable_map(names=None, cell=0.5, agent_height=1.8, agent_radius=0.3, max_s
     home = home_region(grid, start)
     path, _ = save_grid_image(grid, base_colors(grid, home), "walkable.png")
     area = cell * cell
-    sizes = sorted((len(m) * area for m in grid["regions"]), reverse=True)
+    regions = sorted(range(len(grid["regions"])), key=lambda i: -len(grid["regions"][i]))
     return {
         "image": str(path),
         "legend": "green reachable, yellow walkable but not reachable, red blocked (solid, low ceiling or too close to a wall), dark no floor. +Y is up in the image.",
@@ -1796,7 +1796,20 @@ def walkable_map(names=None, cell=0.5, agent_height=1.8, agent_radius=0.3, max_s
         "unreachable_area_m2": rnd((len(grid["nodes"]) - len(grid["regions"][home])) * area, 2),
         "blocked_area_m2": rnd(len(grid["blocked"]) * area, 2),
         "regions": len(grid["regions"]),
-        "largest_regions_m2": [rnd(v, 2) for v in sizes[:5]],
+        "largest_regions": [region_summary(grid, i, area, i == home) for i in regions[:5]],
+        "note": "A walkable region that is not reachable is often the top of a solid (a roof, a crate, a wall top): its floor_z tells.",
+    }
+
+
+def region_summary(grid, index, area, reachable):
+    keys = grid["regions"][index]
+    xs, ys = zip(*(node_xy(grid, k) for k in keys))
+    zs = [grid["nodes"][k] for k in keys]
+    return {
+        "area_m2": rnd(len(keys) * area, 2),
+        "reachable": reachable,
+        "floor_z": [rnd(min(zs), 2), rnd(max(zs), 2)],
+        "box": [[rnd(min(xs), 2), rnd(min(ys), 2)], [rnd(max(xs), 2), rnd(max(ys), 2)]],
     }
 
 

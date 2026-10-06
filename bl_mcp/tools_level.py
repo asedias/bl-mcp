@@ -73,7 +73,7 @@ def viewshed(
     floor. Returns visible and hidden area, the farthest visible distance and a map. Use it for spawns (what does an
     enemy see?), sniper spots, hiding places, objective visibility. The area is the one that contains the point."""
     result = call("viewshed", point=list(point), names=names, eye_height=eye_height, target_height=target_height, cell=cell, max_range=max_range, agent_height=agent_height, agent_radius=agent_radius, max_step=max_step, max_slope_deg=max_slope_deg)
-    return [text({k: v for k, v in result.items() if k != "image"}), Image(path=result["image"])]
+    return [text(result), Image(path=result["image"])]
 
 
 @mcp.tool()
@@ -92,7 +92,7 @@ def check_passages(
     `min_corridor`). The width is the free width including the agent radius, accurate to about one cell, and it errs on the
     small side. Returns violations with positions and a map. `start` picks the area when there are several levels."""
     result = call("check_passages", names=names, min_door=min_door, min_corridor=min_corridor, door_length=door_length, cell=cell, agent_height=agent_height, agent_radius=agent_radius, start=start and list(start))
-    return [text({k: v for k, v in result.items() if k != "image"}), Image(path=result["image"])]
+    return [text(result), Image(path=result["image"])]
 
 
 @mcp.tool()
