@@ -59,8 +59,8 @@ def delete_faces(object: str, where: dict | None = None) -> str:
 
 @tool_with(WHERE)
 def subdivide_faces(object: str, where: dict | None = None, cuts: int = 1) -> str:
-    """Split the picked faces into a grid; `cuts` is the number of cuts per edge. The shape stays: it gives geometry
-    to bend, sculpt or displace. Use subdivide to round the whole mesh, remesh for an even skin over merged parts."""
+    """Add geometry without changing the shape: split the picked faces into a grid, `cuts` cuts per edge, to bend,
+    sculpt or displace later. Use subdivide to round the whole mesh, remesh for an even skin over merged parts."""
     return text(call("subdivide_faces", object=object, where=where, cuts=cuts))
 
 
@@ -171,7 +171,8 @@ def shrinkwrap(object: str, target: str, method: Literal["nearest_surface", "nea
 
 @mcp.tool()
 def remesh(object: str, voxel_size: float = 0.05, smooth_shading: bool = True) -> str:
-    """Rebuild the mesh as an even voxel surface: fuses overlapping parts into one skin and gives clean topology to sculpt.
+    """Replace the topology: rebuild the mesh as an even voxel surface that fuses overlapping parts into one skin, for
+    sculpting.
     A smaller voxel_size means more detail and many more triangles. The old topology and UVs are lost. Use subdivide
     to round a mesh and keep its topology, subdivide_faces to add geometry to picked faces."""
     return text(call("remesh", object=object, voxel_size=voxel_size, smooth_shading=smooth_shading))

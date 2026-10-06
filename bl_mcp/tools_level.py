@@ -50,8 +50,8 @@ def scatter(
 
 @mcp.tool()
 def place_on(object: str, surface: list[str], at: list[float] | None = None, yaw_deg: float | None = None) -> str:
-    """Drop an object (with children) onto a surface: its lowest point lands on the first hit under it (or under world xy
-    `at`). Use it for props on tables, floors with height changes, terrain. Use ground for a level floor at a known
+    """Drop by a ray: lower an object (with children) until its lowest point lands on the first surface under it (or
+    under world xy `at`). Use it for props on tables, floors with height changes, terrain. Use ground for a level floor at a known
     height, attach to align by bounding boxes, scatter for many copies."""
     return text(call("place_on", object=object, surface=surface, at=at, yaw_deg=yaw_deg))
 

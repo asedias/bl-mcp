@@ -2,6 +2,8 @@
 
 import os
 
+from mcp.types import ToolAnnotations
+
 TOOLSETS = {
     "core": [
         "status", "recipe", "scene_tree", "measure", "run_python", "job_status", "render_sheet", "render_view",
@@ -38,6 +40,21 @@ TOOLSETS = {
 DEFAULT = [name for name in TOOLSETS if name != "dev"]
 SERVER_ONLY_TOOLS = {"recipe", "reload_addon"}
 ALWAYS_LOADED = ["status", "recipe", "scene_tree", "measure", "render_view", "run_python"]
+# Tools that change neither the scene nor user files (check pictures go to the work folder).
+READ_ONLY = {
+    "status", "recipe", "scene_tree", "measure", "render_sheet", "render_view", "diff_since", "find_floating",
+    "check_contacts", "check_mesh", "assert_spec", "run_spec", "mesh_info", "select_faces", "check_symmetry",
+    "measure_profile", "trace_outline", "compare_view", "overlay_reference", "pixel_to_world", "walkable_map", "route",
+    "check_passages", "sightline_map", "viewshed", "raycast", "line_of_sight", "list_materials", "list_lights",
+    "list_bones", "check_weights", "pose_sheet", "check_game_ready", "inspect_glb",
+}
+# Tools that only add objects, files or settings; the rest may change or remove existing data.
+ADDITIVE = {
+    "create_primitive", "duplicate", "mirror", "limb", "loft", "blob", "lathe", "sweep", "extrude_profile",
+    "visual_hull", "loft_from_masks", "checkpoint", "save_blend", "save_spec", "export_glb", "import_glb",
+    "prepare_reference", "add_light", "set_camera", "match_camera", "create_armature", "build_from_grid", "terrain",
+    "rock", "scatter", "render_final", "job_status",
+}
 
 state = {"known": set(), "on": list(DEFAULT), "off": []}
 
@@ -63,7 +80,7 @@ def without_titles(schema):
 
 
 def apply(mcp):
-    """Check that every tool has one toolset, drop the tools of the sets that are off, slim the schemas."""
+    """Check that every tool has one toolset, drop the tools of the sets that are off, slim the schemas, annotate."""
     registered = {tool.name: tool for tool in mcp._tool_manager.list_tools()}
     placed = [name for names in TOOLSETS.values() for name in names]
     problems = {
@@ -82,6 +99,9 @@ def apply(mcp):
             mcp.remove_tool(name)
             continue
         tool.parameters = without_titles(tool.parameters)
+        tool.annotations = ToolAnnotations(
+            readOnlyHint=name in READ_ONLY, destructiveHint=name not in READ_ONLY and name not in ADDITIVE, openWorldHint=False
+        )
         if name in ALWAYS_LOADED:
             tool.meta = {**(tool.meta or {}), "anthropic/alwaysLoad": True}
 

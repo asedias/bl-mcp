@@ -62,9 +62,9 @@ def render_final(path: str, engine: Literal["eevee", "cycles", "workbench"] = "e
                  transparent: bool = False, camera: str | None = None,
                  file_format: Literal["PNG", "JPEG", "WEBP", "TIFF", "OPEN_EXR", "BMP"] = "PNG", denoise: bool = True, view_transform: str = "Standard",
                  exposure: float | None = None, auto_exposure: bool = False, meter: list[str] | None = None) -> list:
-    """Render the scene to a file with its own lights, materials and camera, and show the picture. Needs a camera:
-    call set_camera first (or pass `camera`). For quick check pictures use render_sheet (overview) or render_view (any
-    angle, no set-up). `path` is absolute, or relative to the work folder; the folder is created.
+    """The presentation picture: render through the scene camera with the scene lights and materials to a file.
+    Needs a camera: call set_camera first (or pass `camera`). For check pictures use render_sheet (overview) or
+    render_view (any angle), they need no set-up. `path` is absolute, or relative to the work folder; the folder is created.
     `engine`: eevee (fast), cycles (slow, CPU, real light), workbench (flat preview, no lights needed).
     `size` is pixels for a square, or [width, height]. `samples` is the quality: 16-64 for eevee, 32-256 for cycles.
     `transparent` writes alpha (PNG, WEBP, TIFF, OPEN_EXR) and hides the world. `denoise` is for cycles only.

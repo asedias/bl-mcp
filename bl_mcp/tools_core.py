@@ -92,8 +92,8 @@ def attach(
     offset: Vec3 = (0, 0, 0),
     with_children: bool = True,
 ) -> str:
-    """Move `part` (with its children) so a point of its world bounding box lands on a point of the bounding box of
-    `to`. Anchors are fractions 0..1 per axis: (0.5,0.5,0) is bottom centre, (0.5,0.5,1) is top centre.
+    """Align by bounding boxes: move `part` (with its children) so an anchor of its world box lands on an anchor of the
+    box of `to`. Surfaces are not looked at: move_to_contact closes a real gap, place_on drops onto a surface. Anchors are fractions 0..1 per axis: (0.5,0.5,0) is bottom centre, (0.5,0.5,1) is top centre.
     Default puts the part on top of the target. `offset` is in metres. Both boxes include the children of each object;
     with_children=false measures the two objects alone (the children still move with the part). The answer gives
     `boxes_used` (objects, min, max, size of both boxes after the move) and `moved_by`; min and max at the top level
@@ -104,8 +104,8 @@ def attach(
 
 @mcp.tool()
 def ground(names: list[str] | None = None, z: float = 0.0) -> str:
-    """Move objects (all top-level objects when names is empty) so their lowest point sits at height z.
-    Use place_on instead when the floor is another object or not level."""
+    """Set a level floor: move objects (all top-level objects when names is empty) so their lowest point sits at height
+    z. No other object is looked at: use place_on when the floor is another object or not level."""
     return text(call("ground", names=names, z=z))
 
 
@@ -157,7 +157,7 @@ def shade(names: list[str], mode: Literal["smooth", "flat", "auto"] = "smooth", 
 
 @mcp.tool()
 def subdivide(names: list[str], levels: int = 1, apply: bool = True) -> str:
-    """Round the whole geometry with Catmull-Clark subdivision (each level quadruples the faces). apply=true bakes it
+    """Round the whole mesh with Catmull-Clark subdivision: the shape changes, each level quadruples the faces. apply=true bakes it
     into the mesh and sets smooth shading. Watch the triangle count in the answer against your budget. Use
     subdivide_faces to cut picked faces into a grid without rounding, remesh for an even skin over merged parts."""
     return text(call("subdivide", names=names, levels=levels, apply=apply))
@@ -288,7 +288,8 @@ def find_floating(
 
 @mcp.tool()
 def move_to_contact(a: str, to: str, axis: Literal["X", "-X", "Y", "-Y", "Z", "-Z"] | None = None, depth: float = 0.0) -> str:
-    """Move `a` (with children) until its surface touches the surface of `to`. Without `axis` it takes the shortest
+    """Close a gap by surfaces: slide `a` (with children) until its mesh touches the mesh of `to` (attach aligns
+    boxes instead, place_on drops by a ray). Without `axis` it takes the shortest
     way; with an axis it slides along that axis only, so other coordinates stay. `depth` sinks the part into the
     target by that many metres to hide the seam: use 0.005..0.02 for limbs and necks. If the parts already
     overlap nothing moves. The whole object moves, never only its end: for a long part that must stay put at the
@@ -313,7 +314,7 @@ def render_sheet(
     size: int = 384,
     color_by: Literal["material", "object"] = "material",
 ) -> list:
-    """Overview: one image with several fixed views. The flat views are orthographic and share one scale. A grid
+    """Overview picture for checking: several fixed views on a metre grid, no scene camera or lights needed. The flat views are orthographic and share one scale. A grid
     shows metres, coloured lines show the world axes (X red, Y green, Z blue). `names` limits the objects (with
     children). color_by `object` gives every object its own colour and the answer has a `legend` of name to
     '#rrggbb' (the lit picture is a little darker or lighter). Use render_view for one free angle, a close-up or a
@@ -334,7 +335,7 @@ def render_view(
     look_at: Vec3 | None = None,
     name: str = "view",
 ) -> list:
-    """Check picture from any angle with its own camera and light. The camera frames the bounding volume of `target`
+    """Close-up picture for checking: one free angle with its own camera and light, no set-up needed. The camera frames the bounding volume of `target`
     (with children; empty means everything), so a tall figure and a small bolt both fill the picture. Azimuth 0 looks
     at the front (from -Y), 90 from +X, 180 from the back; elevation 0 is level, 90 is from above. fov 0 means
     orthographic. isolate=false draws the whole scene but still frames `target`: use it for close-ups of joints in

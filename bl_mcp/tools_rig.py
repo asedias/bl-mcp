@@ -69,14 +69,14 @@ def unwrap(names: list[str], method: Literal["smart", "angle", "conformal", "cub
 
 @mcp.tool()
 def paint_faces(object: str, color: str | list[float], where: dict | None = None, attribute: str = "Color") -> str:
-    """Paint vertex colour on the picked faces (see select_faces for `where`: normal, x/y/z ranges, box, area, index).
+    """Colour faces without a material or a texture: vertex colour on the picked faces (see select_faces for `where`: normal, x/y/z ranges, box, area, index).
     Colour is '#rrggbb' or [r,g,b]. For stylised models that use vertex colours instead of textures."""
     return text(call("paint_faces", object=object, color=color, where=where, attribute=attribute))
 
 
 @mcp.tool()
 def palette_uv(object: str, cell: list[int], grid: list[int] = (4, 4), where: dict | None = None, uv_layer: str = "UVMap") -> str:
-    """Point the UVs of the picked faces at the centre of one cell of a palette texture, so the face takes that flat
-    colour: cell [column, row] with row 0 at the top, grid [columns, rows]. For palette-atlas styles (one small colour
+    """Colour faces from a shared palette texture: point the UVs of the picked faces at the centre of one cell, so the
+    face takes that flat colour: cell [column, row] with row 0 at the top, grid [columns, rows]. For palette-atlas styles (one small colour
     grid image shared by all models)."""
     return text(call("palette_uv", object=object, cell=cell, grid=list(grid), where=where, uv_layer=uv_layer))
