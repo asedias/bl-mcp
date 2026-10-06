@@ -52,10 +52,9 @@ bl-mcp was not designed as a tool catalogue. It grew while an agent built real g
 Needs [`uv`](https://docs.astral.sh/uv/) and Blender 5.0 or newer.
 
 1. Get the code: `git clone https://github.com/asedias/bl-mcp`.
-2. Link or copy `addon/bl_bridge` into the Blender add-ons folder, for example on macOS
-   `~/Library/Application Support/Blender/<version>/scripts/addons/`.
-3. In Blender: Edit > Preferences > Add-ons > enable **BL MCP Bridge**. The console prints `listening on 127.0.0.1:9877`.
-4. Add the server to the MCP client. Claude Code:
+2. Install the add-on: `uv run --project bl-mcp bl-mcp-install-addon`. It finds Blender, copies `addon/bl_bridge` into its add-ons folder and enables it (`--link` symlinks instead, so a `git pull` updates the add-on; `--blender PATH` picks a Blender). Restart Blender if it was open.
+   By hand instead: the `bl_bridge-<version>.zip` of a [release](https://github.com/asedias/bl-mcp/releases) through Edit > Preferences > Add-ons > Install from Disk, or copy the folder into `~/Library/Application Support/Blender/<version>/scripts/addons/` (macOS) and enable **BL MCP Bridge**. The console prints `listening on 127.0.0.1:9877`.
+3. Add the server to the MCP client. Claude Code:
 
 ```
 claude mcp add blender -- uv run --project /path/to/bl-mcp bl-mcp
@@ -81,7 +80,7 @@ The agent calls `status` first. It shows both versions, compares the tools of th
 
 The server and the add-on talk by JSON lines on `127.0.0.1:9877`. Set `BL_MCP_PORT` on both sides to change the port.
 
-**Security.** The add-on listens on localhost only, without authentication: any local process can connect and run `run_python`, which executes arbitrary Python inside your Blender. This is the purpose of the tool, and the same trust you give the MCP client. Do not run it on a shared machine, and keep the port closed in your firewall. No data leaves the machine: there is no telemetry, no cloud service, no asset download.
+**Security.** The add-on listens on localhost only, without authentication: any local process can connect and run `run_python`, which executes arbitrary Python inside your Blender. This is the purpose of the tool, and the same trust you give the MCP client. Do not run it on a shared machine, and keep the port closed in your firewall. `BL_MCP_NO_PYTHON=1` removes `run_python`: set it for the server (the tool disappears) and for Blender (the add-on refuses it), for pipelines where the agent may only use the typed tools. No data leaves the machine: there is no telemetry, no cloud service, no asset download.
 
 ## Toolsets
 

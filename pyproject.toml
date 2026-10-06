@@ -16,6 +16,7 @@ Repository = "https://github.com/asedias/bl-mcp"
 [project.scripts]
 bl-mcp = "bl_mcp.server:main"
 bl-mcp-find-blender = "bl_mcp.locate:main"
+bl-mcp-install-addon = "bl_mcp.install:main"
 
 [build-system]
 requires = ["hatchling"]

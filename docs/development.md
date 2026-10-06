@@ -25,7 +25,8 @@ bl_mcp/               MCP server (stdio)
   tools_*.py          one typed wrapper with a docstring per tool
   toolsets.py         tool-to-set table, BL_MCP_TOOLSETS
   recipes/            step-by-step recipes served by the `recipe` tool and the prompts
-  locate.py           Blender locator
+  locate.py           Blender locator (bl-mcp-find-blender)
+  install.py          add-on installer (bl-mcp-install-addon)
 tests/                see Test
 ```
 
