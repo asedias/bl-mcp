@@ -162,17 +162,37 @@ def repair_mesh(object, weld=None, fill_holes=True, hole_sides=8, remove_loose=T
 
 
 @handler
-def transform_objects(names, move=None, rotate_deg=None, scale=None, pivot=None):
-    objs = [get_object(n) for n in names]
+def transform_objects(names=None, move=None, rotate_deg=None, scale=None, pivot=None, place=None, anchor=(0.5, 0.5, 0)):
+    objs = [get_object(n) for n in names or []]
+    if place:
+        placed = place_each(place, anchor)
+        objs += [o for o in placed if o not in objs]
     if not objs:
-        raise ValueError("Give at least one object name")
+        raise ValueError("Give object names, or `place` with a point per object")
     for label, value in (("move", move), ("rotate_deg", rotate_deg), ("pivot", pivot)):
         if value is not None and len(value) != 3:
             raise ValueError(f"{label} is [x, y, z]")
     if isinstance(scale, (list, tuple)) and len(scale) != 3:
         raise ValueError("scale is a number or [x, y, z]")
-    transform_world(objs, move=move, rotate_deg=rotate_deg, scale=scale, pivot=pivot)
+    if move is not None or rotate_deg is not None or scale is not None:
+        transform_world(objs, move=move, rotate_deg=rotate_deg, scale=scale, pivot=pivot)
     return [describe(o) for o in objs]
+
+
+def place_each(place, anchor):
+    """Each object goes with the anchor of its own world box (children included) to its own point."""
+    if len(anchor) != 3:
+        raise ValueError("anchor is [fx, fy, fz], fractions of the object's box")
+    objs = []
+    for name, point in place.items():
+        if len(point) != 3:
+            raise ValueError(f"place[{name!r}] is [x, y, z]")
+        obj = get_object(name)
+        box = require_bounds(with_children([name]))
+        move_world(obj, Vector(point) - anchor_point(box, anchor))
+        objs.append(obj)
+    bpy.context.view_layer.update()
+    return objs
 
 
 def keep_children_in_place(obj, change):

@@ -340,4 +340,13 @@ bail = call("sweep", {"name": "bail", "arc": {"center": [0, 0, 0.2], "radius": 0
 expect("an arc sweep spans the diameter and rises by the radius", abs(bail["size"][0] - 0.19) < 0.002 and abs(bail["size"][2] - 0.095) < 0.002 and abs(bail["max"][2] - 0.295) < 0.002, bail)
 
 
+call("create_primitive", {"kind": "cube", "name": "crate_a", "size": [1, 1, 1], "at": [0, 0, 0.5]})
+call("create_primitive", {"kind": "cube", "name": "crate_b", "size": [1, 1, 2], "at": [0, 0, 1]})
+placed = call("transform_objects", {"place": {"crate_a": [10, 0, 0], "crate_b": [12, 3, 0.5]}})
+by_name = {o["name"]: o for o in placed}
+expect("place puts each object's bottom centre on its own point", by_name["crate_a"]["min"][2] == 0 and by_name["crate_a"]["center"][:2] == [10.0, 0.0] and abs(by_name["crate_b"]["min"][2] - 0.5) < 1e-6 and by_name["crate_b"]["center"][:2] == [12.0, 3.0], placed)
+top = call("transform_objects", {"place": {"crate_a": [10, 0, 5]}, "anchor": [0.5, 0.5, 1]})
+expect("anchor picks the point of the box", abs(top[0]["max"][2] - 5) < 1e-6, top[0])
+
+
 finish()

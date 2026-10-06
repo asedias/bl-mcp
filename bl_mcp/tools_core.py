@@ -126,14 +126,18 @@ def set_dimensions(
 
 
 @mcp.tool()
-def transform_objects(names: list[str], move: Vec3 | None = None, rotate_deg: Vec3 | None = None, scale: float | Vec3 | None = None, pivot: Vec3 | None = None) -> str:
-    """Move, turn and scale objects together with their children. Order: scale, then rotate, then move. `rotate_deg`
+def transform_objects(names: list[str] | None = None, move: Vec3 | None = None, rotate_deg: Vec3 | None = None, scale: float | Vec3 | None = None, pivot: Vec3 | None = None,
+                      place: dict[str, Vec3] | None = None, anchor: Vec3 = (0.5, 0.5, 0)) -> str:
+    """Move, turn and scale objects together with their children, or put several objects at their own points in one
+    call: `place` is {"name": [x, y, z], ...} and `anchor` is the point of each object's own box that lands there
+    ([0.5, 0.5, 0] is the bottom centre). Order: place, then scale, then rotate, then move. `rotate_deg`
     [rx, ry, rz] turns around the world X, then Y, then Z axis. `scale` is a number or [x, y, z] along the world axes.
     `pivot` is a world point for the turn and the scale; the default is the centre of the bounding box of all the
     objects and their children. Several objects turn as one group. Scaling a turned object by different factors
     on each axis shears it a little: set the size with set_dimensions first. The answer lists every object after the
     change. Use it when you know the numbers; to place a part against another use attach or move_to_contact."""
-    return text(call("transform_objects", names=names, move=move and list(move), rotate_deg=rotate_deg and list(rotate_deg), scale=scale, pivot=pivot and list(pivot)))
+    return text(call("transform_objects", names=names, move=move and list(move), rotate_deg=rotate_deg and list(rotate_deg), scale=scale, pivot=pivot and list(pivot),
+                     place=place and {k: list(v) for k, v in place.items()}, anchor=list(anchor)))
 
 
 @mcp.tool()

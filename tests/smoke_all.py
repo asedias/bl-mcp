@@ -212,6 +212,7 @@ async def main():
 
             # transform, repair, lights, text, procedural, bake, reference camera
             await call("transform_objects", names=["smoke_cube"], rotate_deg=[0, 0, 45])
+            await call("transform_objects", place={"smoke_cube": [0, 0, 0]})
             await call("repair_mesh", object="smoke_cube")
             await call("add_light", kind="spot", name="smoke_spot", location=[0, -3, 3], look_at=[0, 3, 1])
             await call("list_lights")
