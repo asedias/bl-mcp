@@ -398,12 +398,15 @@ def walkable_map(
     max_slope_deg: float = 45.0,
     start: Vec3 | None = None,
     max_levels: int = 3,
+    probe: list[Vec3] | None = None,
 ) -> list:
     """Check where an agent of this size can walk, then flood from `start` (default: the largest area). Floors are
     found by rays, so ramps, stairs and several levels work. Returns the reachable, unreachable and blocked areas
     in m2 and a top-down image. `largest_regions` gives each region's area, whether it is reachable, its floor height
     range and its box: an unreachable region with a high floor_z is a roof or a crate top, not a design error. Use it to
-    prove that every room, spawn and objective connects."""
+    prove that every room, spawn and objective connects. `probe` is a list of world points: for each the answer
+    gives walkable, reachable, floor_z and free_width_m (the widest agent that fits there), so a spawn, a site or a
+    chokepoint can be checked by number."""
     result = call(
         "walkable_map", names=names, cell=cell, agent_height=agent_height, agent_radius=agent_radius,
         max_step=max_step, max_slope_deg=max_slope_deg, start=start and list(start), max_levels=max_levels, probe=probe and [list(p) for p in probe],

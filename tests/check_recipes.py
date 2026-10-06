@@ -15,7 +15,7 @@ from bl_mcp.app import mcp
 ANSWER_FIELDS = {
     "warning", "warnings", "hint", "inner_detail", "achieved_width", "clamped", "excluded", "ready", "tiny_gaps",
     "boxes_used", "not_exported", "faces_without_material", "clipped_highlights", "crushed_blacks", "rejected",
-    "visible_share", "auto_exposure", "textures", "ignored_options",
+    "visible_share", "auto_exposure", "textures", "ignored_options", "largest_regions", "probes", "free_width_m",
 }
 
 SPAN = re.compile(r"`([^`\n]+)`")

@@ -52,7 +52,7 @@ async def main():
             # level: a plan, then the checks
             await call("build_from_grid", layout=["#########", "#...#...#", "#.S.D.O.#", "#...#...#", "#########"], cell=1.0, name="smoke_lv", origin=[40, 0, 0])
             level = ["smoke_lv_floor", "smoke_lv_walls"]
-            await call("walkable_map", names=level, cell=0.5)
+            await call("walkable_map", names=level, probe=[[0, 0, 0], [50, 50, 0]])
             await call("route", start=[42.5, 2.5, 0], end=[46.5, 2.5, 0], names=level, cell=0.25)
             await call("sightline_map", names=level, cell=1.0, max_range=20)
             await call("check_passages", names=level, min_door=1.5, min_corridor=0.4, cell=0.25)
@@ -101,6 +101,7 @@ async def main():
             await call("render_view", target=figure, mode="ids", size=192, azimuth=0, elevation=0, fov=0, name="smoke_ref")
             await call("render_view", target=figure, mode="ids", size=192, azimuth=90, elevation=0, fov=0, name="smoke_side")
             await call("render_view", target=figure, mode="backfaces", size=128, name="smoke_back")
+            await call("render_view", eye=[0, -3, 1.6], look_at=[0, 0, 1.0], fov=60, size=128, name="smoke_eye")
             front, side = str(RENDERS / "smoke_ref.png"), str(RENDERS / "smoke_side.png")
             fitted = await call("compare_view", reference=front, view="front", names=figure, size=192)
             if '"iou_outline": 0.9' not in fitted and '"iou_outline": 1.0' not in fitted:
