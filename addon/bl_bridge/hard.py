@@ -321,6 +321,7 @@ def boolean_merge(target, tool, operation, solver="EXACT", allow_open=False, rep
     start = evaluated_bmesh(target)
     faults = edge_faults(start)
     start.free()
+    had_uv = bool(target.data.uv_layers)
     cutter = marked_tool(tool)
     best, tried, volume = None, [], None
     try:
@@ -375,6 +376,10 @@ def boolean_merge(target, tool, operation, solver="EXACT", allow_open=False, rep
     if target.data.users > 1:
         target.data = target.data.copy()
     bm.to_mesh(target.data)
+    # A tool with a UV map leaves the target an all-zero UV layer; unwrap tools would then take it for a real one.
+    if not had_uv:
+        for layer in list(target.data.uv_layers):
+            target.data.uv_layers.remove(layer)
     target.data.update()
     bm.free()
     empty = drop_empty_slots(target.data)

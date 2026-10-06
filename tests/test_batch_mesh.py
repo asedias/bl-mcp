@@ -322,4 +322,18 @@ keep.data.materials.append(None)
 res = call("repair_mesh", {"object": "r_keep", "remove_empty_slots": False})
 expect("remove_empty_slots=false keeps the slot", len(keep.material_slots) == 1 and res["removed"]["empty_material_slots"] == 0, res)
 
+# a tool with a UV map must not leave the target a fake UV layer
+call("create_primitive", {"kind": "cube", "name": "uv_target", "size": [0.2, 0.2, 0.2], "at": [8, 0, 0.1]})
+for layer in list(bpy.data.objects["uv_target"].data.uv_layers):
+    bpy.data.objects["uv_target"].data.uv_layers.remove(layer)
+call("create_primitive", {"kind": "cylinder", "name": "uv_tool", "size": [0.05, 0.05, 0.4], "at": [8, 0, 0.1]})
+call("unwrap", {"names": ["uv_tool"]})
+call("boolean", {"a": "uv_target", "b": "uv_tool", "operation": "difference"})
+expect("boolean does not add a UV layer to a target without one", len(bpy.data.objects["uv_target"].data.uv_layers) == 0)
+call("create_primitive", {"kind": "cube", "name": "uv_target2", "size": [0.2, 0.2, 0.2], "at": [9, 0, 0.1]})
+call("create_primitive", {"kind": "cylinder", "name": "uv_tool2", "size": [0.05, 0.05, 0.4], "at": [9, 0, 0.1]})
+call("unwrap", {"names": ["uv_target2", "uv_tool2"]})
+call("boolean", {"a": "uv_target2", "b": "uv_tool2", "operation": "difference"})
+expect("boolean keeps the UV layer of a target that had one", len(bpy.data.objects["uv_target2"].data.uv_layers) == 1)
+
 finish()

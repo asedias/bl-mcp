@@ -7,12 +7,13 @@ def set_material(names: list[str], color: str | list[float], material: str | Non
                  metallic: float = 0.0, alpha: float = 1.0, emission: dict | None = None, coat: float = 0.0,
                  subsurface: float = 0.0, texture: str | None = None, normal_map: str | None = None,
                  bump: dict | None = None, roughness_map: str | None = None, metallic_map: str | None = None,
-                 orm_map: str | None = None) -> str:
-    """Give meshes a material (Principled BSDF, exports to glTF). The quick form is `names` and `color`: '#rrggbb' or
+                 orm_map: str | None = None, transmission: float = 0.0) -> str:
+    """Create or rebuild a material (Principled BSDF, exports to glTF) and put it on whole meshes. The quick form is `names` and `color`: '#rrggbb' or
     [r, g, b] in 0..1. Without `material` the name comes from the numbers, so equal parameters reuse one material
     (fewer draw calls); an existing name is rebuilt. Slot 0 gets it: use assign_material_faces for parts of a mesh.
     alpha below 1 is glTF BLEND: glass only, transparent faces cost sorting. emission is {"color": "#ffcc66",
-    "strength": 2.0}. coat is a clear layer. subsurface does not reach glTF.
+    "strength": 2.0}. coat is a clear layer. transmission 1 is clear glass (refracting, Cycles and
+    KHR_materials_transmission; use alpha for cheap glass). subsurface does not reach glTF.
     Image paths (the meshes need a UV map: unwrap or palette_uv first): texture (base colour; `color` then tints
     it, '#ffffff' keeps it; alpha multiplies its alpha), normal_map (tangent space), roughness_map and metallic_map
     (grey), or orm_map instead of those two (R occlusion, G roughness, B metallic). A map replaces its number.
@@ -20,7 +21,7 @@ def set_material(names: list[str], color: str | list[float], material: str | Non
     The answer has `gltf`: alphaMode, the factors and the texture slots that will be written. For patterns (wood,
     bricks, worn metal) use procedural_material."""
     return text(call("set_material", names=names, color=color, material=material, roughness=roughness, metallic=metallic,
-                     alpha=alpha, emission=emission, coat=coat, subsurface=subsurface, texture=texture, normal_map=normal_map, bump=bump,
+                     alpha=alpha, emission=emission, coat=coat, subsurface=subsurface, texture=texture, normal_map=normal_map, bump=bump, transmission=transmission,
                      roughness_map=roughness_map, metallic_map=metallic_map, orm_map=orm_map))
 
 
@@ -39,7 +40,7 @@ def list_materials(name: str | None = None) -> str:
 
 @tool_with(WHERE)
 def assign_material_faces(object: str, material: str, where: dict | None = None) -> str:
-    """Put an existing material on the picked faces of one mesh. Adds a material slot if the object has none for it.
+    """Put an existing material on part of a mesh: the picked faces get it, the other faces keep theirs. Adds a slot if the object has none for it.
     Other faces keep their material. One mesh with several materials costs one draw call per material in the engine, so keep
     the count low. Create the material first with set_material."""
     return text(call("assign_material_faces", object=object, material=material, where=where))

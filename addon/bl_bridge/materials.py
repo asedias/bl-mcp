@@ -47,7 +47,7 @@ def exported(node):
     return node.type in EXPORTED_NODES
 
 
-def default_name(color, roughness, metallic, alpha, emission, coat, subsurface):
+def default_name(color, roughness, metallic, alpha, emission, coat, subsurface, transmission=0.0):
     parts = [f"pbr_{hex_of(parse_color(color)).lstrip('#')}", f"r{roughness:g}"]
     if metallic:
         parts.append(f"m{metallic:g}")
@@ -59,6 +59,8 @@ def default_name(color, roughness, metallic, alpha, emission, coat, subsurface):
         parts.append(f"c{coat:g}")
     if subsurface:
         parts.append(f"s{subsurface:g}")
+    if transmission:
+        parts.append(f"t{transmission:g}")
     return "_".join(parts)
 
 
@@ -165,7 +167,7 @@ def link_surface_maps(tree, bsdf, roughness_map, metallic_map, orm_map):
 
 
 def build_surface(mat, color, roughness, metallic, alpha, emission, coat, subsurface, texture, normal_map, bump,
-                  roughness_map=None, metallic_map=None, orm_map=None):
+                  roughness_map=None, metallic_map=None, orm_map=None, transmission=0.0):
     mat.use_nodes = True
     clear_extras(mat)
     tree, bsdf = mat.node_tree, principled(mat)
@@ -176,6 +178,7 @@ def build_surface(mat, color, roughness, metallic, alpha, emission, coat, subsur
     socket(bsdf, "Alpha").default_value = alpha
     socket(bsdf, "Coat Weight", "Clearcoat").default_value = coat
     socket(bsdf, "Subsurface Weight", "Subsurface").default_value = subsurface
+    socket(bsdf, "Transmission Weight", "Transmission").default_value = transmission
     glow = emission or {}
     socket(bsdf, "Emission Color", "Emission").default_value = (*parse_color(glow.get("color", "#000000")), 1)
     socket(bsdf, "Emission Strength").default_value = glow.get("strength", 1.0) if emission else 0.0
@@ -239,7 +242,7 @@ def gltf_summary(mat):
 @handler
 def set_material(names, color, material=None, roughness=0.8, metallic=0.0, alpha=1.0, emission=None, coat=0.0,
                  subsurface=0.0, texture=None, normal_map=None, bump=None, roughness_map=None, metallic_map=None,
-                 orm_map=None):
+                 orm_map=None, transmission=0.0):
     objs = [get_object(n) for n in names]
     if any(o.type != "MESH" for o in objs):
         raise ValueError("Materials go on meshes")
@@ -248,12 +251,12 @@ def set_material(names, color, material=None, roughness=0.8, metallic=0.0, alpha
     images = {"tex": texture, "nrm": normal_map, "rgh": roughness_map, "mtl": metallic_map, "orm": orm_map}
     if any(images.values()) and not all(o.data.uv_layers for o in objs):
         require_uv(names)
-    label = material or default_name(color, roughness, metallic, alpha, emission, coat, subsurface)
+    label = material or default_name(color, roughness, metallic, alpha, emission, coat, subsurface, transmission)
     if any(images.values()) or bump:
         label = material or label + "_" + "_".join(k for k, v in {**images, "bump": bump}.items() if v)
     mat = bpy.data.materials.get(label) or bpy.data.materials.new(label)
     build_surface(mat, color, roughness, metallic, alpha, emission, coat, subsurface, texture, normal_map, bump,
-                  roughness_map, metallic_map, orm_map)
+                  roughness_map, metallic_map, orm_map, transmission)
     put_on_objects(mat, objs)
     result = {"material": label, "objects": names, "reused": mat.users > len(objs), "gltf": gltf_summary(mat)}
     if alpha < 1:
@@ -264,6 +267,8 @@ def set_material(names, color, material=None, roughness=0.8, metallic=0.0, alpha
         result["note"] = "emission strength over 1 exports as KHR_materials_emissive_strength"
     if coat or subsurface:
         result["note_extensions"] = "coat exports as KHR_materials_clearcoat; subsurface has no glTF counterpart in most engines. Both are often ignored at runtime"
+    if transmission:
+        result["note_transmission"] = "transmission exports as KHR_materials_transmission (clear glass needs an engine that supports it); in EEVEE it needs the render method dithered or blended. For cheap glass use alpha instead"
     return result
 
 
@@ -338,6 +343,7 @@ def params_of(mat):
         if socket(bsdf, "Emission Strength").default_value > 0 and max(emission[:3]) > 0 else None,
         "coat": round(socket(bsdf, "Coat Weight", "Clearcoat").default_value, 4),
         "subsurface": round(socket(bsdf, "Subsurface Weight", "Subsurface").default_value, 4),
+        "transmission": round(socket(bsdf, "Transmission Weight", "Transmission").default_value, 4),
         "texture": base.filepath if base else None,
         "normal_map": normal.filepath if normal else None,
         "normal_map_colorspace": normal.colorspace_settings.name if normal else None,
@@ -402,7 +408,7 @@ def numbers(mat):
     p = params_of(mat)
     bsdf = principled(mat)
     emission = p["emission"]
-    return [*socket(bsdf, "Base Color").default_value[:3], p["roughness"], p["metallic"], p["alpha"], p["coat"], p["subsurface"],
+    return [*socket(bsdf, "Base Color").default_value[:3], p["roughness"], p["metallic"], p["alpha"], p["coat"], p["subsurface"], p["transmission"],
             *(socket(bsdf, "Emission Color", "Emission").default_value[:3] if emission else (0, 0, 0)),
             emission["strength"] if emission else 0.0]
 

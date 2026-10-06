@@ -174,4 +174,13 @@ call("export_glb", {"path": str(work / "solid.glb")})
 solid_doc = core.read_glb(str(work / "solid.glb"))[0]
 expect("glb opaque has no BLEND", solid_doc["materials"][0].get("alphaMode", "OPAQUE") == "OPAQUE", solid_doc["materials"][0])
 
+call("create_primitive", {"kind": "sphere", "name": "glass_ball", "size": [0.2, 0.2, 0.2], "at": [4, 0, 0.1]})
+glass = call("set_material", {"names": ["glass_ball"], "color": "#ffffff", "roughness": 0.05, "transmission": 1.0})
+expect("transmission is reported", "note_transmission" in glass and glass["material"].endswith("_t1"), glass)
+card = call("list_materials", {"name": glass["material"]})
+expect("the material card shows transmission", card["transmission"] == 1.0, card)
+call("export_glb", {"path": str(work / "glass.glb"), "names": ["glass_ball"]})
+expect("transmission reaches glTF", b"KHR_materials_transmission" in (work / "glass.glb").read_bytes())
+
+
 finish()
