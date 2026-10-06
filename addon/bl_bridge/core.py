@@ -1936,7 +1936,13 @@ def route(start, end, names=None, cell=None, min_width=0.0, agent_height=1.8, ag
                         came[nxt] = cur
                         heapq.heappush(queue, (cost + step, nxt))
     if b not in best:
-        return {"reachable": False, "reason": f"no route with width >= {min_width} m", "widest_possible": "run again with a smaller min_width"}
+        ends = {"start_clearance_m": rnd(width_of(a), 2), "end_clearance_m": rnd(width_of(b), 2)}
+        tight = [name for name, width in (("start", ends["start_clearance_m"]), ("end", ends["end_clearance_m"])) if width < min_width]
+        reason = (
+            f"the {' and '.join(tight)} point itself has less than {min_width} m of free width (see the clearances): move it into the open or lower min_width"
+            if tight else f"no route with width >= {min_width} m between the points: a passage on every way is narrower, run again with a smaller min_width to find it"
+        )
+        return {"reachable": False, "reason": reason, **ends}
     path = [b]
     while path[-1] != a:
         path.append(came[path[-1]])
