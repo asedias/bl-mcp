@@ -225,8 +225,9 @@ def scatter(source, surface, count, seed=0, area=None, min_distance=0.0, align_t
 
 
 @handler
-def viewshed(point, names=None, eye_height=1.6, target_height=1.0, cell=0.5, max_range=60.0, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3):
+def viewshed(point, names=None, eye_height=1.6, target_height=1.0, cell=None, max_range=60.0, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3):
     grid = build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels)
+    cell = grid["cell"]
     home = home_region(grid, point)
     cast = grid["cast"]
     eye = Vector(point) + Vector((0, 0, eye_height))
@@ -287,8 +288,9 @@ def components(mask):
 
 
 @handler
-def check_passages(names=None, min_door=1.0, min_corridor=2.0, door_length=1.5, cell=0.25, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3, start=None):
+def check_passages(names=None, min_door=1.0, min_corridor=2.0, door_length=1.5, cell=None, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3, start=None):
     grid = build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels)
+    cell = grid["cell"]
     home = home_region(grid, start)
     dist = clearance_map(grid, home)
     free = dist > 0

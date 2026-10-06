@@ -1714,12 +1714,22 @@ def label_regions(nodes, max_step):
     return label, regions
 
 
+MAX_GRID_CELLS = 40000
+
+
+def auto_cell(lo, hi):
+    """The finest cell (a multiple of 5 cm, at least 25 cm) that keeps the grid under the cell limit."""
+    span = max(hi.x - lo.x, hi.y - lo.y, 1e-6)
+    return max(0.25, math.ceil(span / math.sqrt(MAX_GRID_CELLS) * 20) / 20)
+
+
 def build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels):
     objs = with_children(names) if names else scene_objects()
     lo, hi = require_bounds(objs)
+    cell = cell or auto_cell(lo, hi)
     nx, ny = math.ceil((hi.x - lo.x) / cell), math.ceil((hi.y - lo.y) / cell)
-    if nx * ny > 40000:
-        raise ValueError(f"{nx}x{ny} cells is too many. Raise `cell`.")
+    if nx * ny > MAX_GRID_CELLS:
+        raise ValueError(f"{nx}x{ny} cells is too many. Use cell={auto_cell(lo, hi)} or larger, or leave cell empty.")
     cast = make_caster()
     cos_slope = math.cos(math.radians(max_slope_deg))
     nodes, blocked = {}, set()
@@ -1782,10 +1792,11 @@ def base_colors(grid, home):
 
 
 @handler
-def walkable_map(names=None, cell=0.5, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, start=None, max_levels=3):
+def walkable_map(names=None, cell=None, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, start=None, max_levels=3):
     grid = build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels)
     home = home_region(grid, start)
     path, _ = save_grid_image(grid, base_colors(grid, home), "walkable.png")
+    cell = grid["cell"]
     area = cell * cell
     regions = sorted(range(len(grid["regions"])), key=lambda i: -len(grid["regions"][i]))
     return {
@@ -1888,10 +1899,11 @@ def clearance_map(grid, home):
 
 
 @handler
-def route(start, end, names=None, cell=0.5, min_width=0.0, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3):
+def route(start, end, names=None, cell=None, min_width=0.0, agent_height=1.8, agent_radius=0.3, max_step=0.35, max_slope_deg=45.0, max_levels=3):
     import heapq
 
     grid = build_grid(names, cell, agent_height, agent_radius, max_step, max_slope_deg, max_levels)
+    cell = grid["cell"]
     a, b = nearest_node(grid, start), nearest_node(grid, end)
     if grid["label"][a] != grid["label"][b]:
         return {"reachable": False, "reason": "start and end are in different walkable regions", "start_region_m2": rnd(len(grid["regions"][grid["label"][a]]) * cell * cell, 2)}

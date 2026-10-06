@@ -122,6 +122,15 @@ expect("sight through the doorway", call("line_of_sight", {"a": [-3, 0, 1.5], "b
 blocked = call("line_of_sight", {"a": [-3, -4, 1.5], "b": [3, -4, 1.5]})
 expect("wall blocks sight", blocked["visible"] is False and blocked["blocked_by"] == "wall_a", blocked)
 expect("object target is not its own blocker", call("line_of_sight", {"a": [-3, 0, 1.5], "b": "floor"})["visible"])
+call("create_primitive", {"kind": "plane", "name": "wide_ground", "size": [120, 120, 0.01], "at": [300, 300, 0]})
+wide = call("walkable_map", {"names": ["wide_ground"]})
+expect("without a cell the grid picks one that fits the scene", "cells of 0.6 m" in wide["grid"], wide["grid"])
+try:
+    call("check_passages", {"names": ["wide_ground"], "cell": 0.1})
+    expect("a too fine cell is refused with a suggestion", False)
+except ValueError as error:
+    expect("a too fine cell is refused with a suggestion", "cell=0.6" in str(error), str(error))
+call("delete", {"names": ["wide_ground"]})
 walk = call("walkable_map", {"cell": 0.4, "start": [-3, 0, 0]})
 expect("walkable regions carry floor height and box", walk["largest_regions"][0]["reachable"] and len(walk["largest_regions"][0]["floor_z"]) == 2 and len(walk["largest_regions"][0]["box"]) == 2, walk["largest_regions"])
 expect("doorway joins both rooms", walk["reachable_area_m2"] > 90, walk)

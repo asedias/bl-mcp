@@ -68,7 +68,7 @@ def measure(names: list[str]) -> str:
 def run_python(code: str, session: str | None = None, reset: bool = False, paths: list[str] | None = None) -> str:
     """Run Python in Blender (bpy, bmesh, mathutils, Vector, np, math are ready). Returns stdout, and the added,
     changed and removed objects with their world sizes, so silent mistakes show up. Prefer the other tools for
-    moving, sizing and checking. With `session` the variables, functions and imports stay between calls under that
+    moving, sizing and checking. The tool descriptions are the documentation: do not read the add-on source here. With `session` the variables, functions and imports stay between calls under that
     name (reset=true clears them; rollback clears all sessions). `paths` are folders added to the import path:
     keep your helper modules there and `import` them once."""
     return text(call("run_python", code=code, session=session, reset=reset, paths=paths or []))
@@ -389,7 +389,7 @@ def line_of_sight(a: str | Vec3, b: str | Vec3) -> str:
 @mcp.tool()
 def walkable_map(
     names: list[str] | None = None,
-    cell: float = 0.5,
+    cell: float | None = None,
     agent_height: float = 1.8,
     agent_radius: float = 0.3,
     max_step: float = 0.35,
@@ -432,7 +432,7 @@ def route(
     start: Vec3,
     end: Vec3,
     names: list[str] | None = None,
-    cell: float = 0.5,
+    cell: float | None = None,
     min_width: float = 0.0,
     agent_height: float = 1.8,
     agent_radius: float = 0.3,
