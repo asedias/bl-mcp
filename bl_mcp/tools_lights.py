@@ -5,14 +5,14 @@ from .app import text as as_text
 
 
 @mcp.tool()
-def add_light(kind: Literal["spot", "point", "area", "sun"] = "spot", name: str = "light", location: Vec3 | None = None,
-              look_at: Vec3 | None = None, power_w: float = 1000.0, color: str | list[float] = "#ffffff", spot_size_deg: float = 45.0,
-              blend: float = 0.15, radius: float = 0.05, size: float | list[float] | None = None, shadow_soft: bool = True,
+def add_light(kind: Literal["spot", "point", "area", "sun"] | None = None, name: str = "light", location: Vec3 | None = None,
+              look_at: Vec3 | None = None, power_w: float | None = None, color: str | list[float] | None = None, spot_size_deg: float | None = None,
+              blend: float | None = None, radius: float | None = None, size: float | list[float] | None = None, shadow_soft: bool | None = None,
               temperature_k: float | None = None, cutoff_m: float | None = None) -> str:
     """Create or update one light you control (setup_lighting makes a whole preset instead). The same `name` updates
-    that light; it never makes a copy. spot is a cone, point shines all ways, area is a panel, sun gives parallel rays.
+    that light and keeps every setting you omit; it never makes a copy. A new light is a spot of 1000 W. spot is a cone, point shines all ways, area is a panel, sun gives parallel rays.
     `location` is in world metres; `look_at` is the point a spot, area or sun aims at. A new light without them sits
-    at [0, 0, 3] and points down; an update keeps what you omit.
+    at [0, 0, 3] and points down.
     `power_w` is watts; for a sun it is W/m2 (1-5, about 3 is a normal day). A point or spot needs about 40 W at
     1 m, 150 W at 2 m, 600 W at 4 m for a normal exposure; an area panel a third of that.
     `color` is '#rrggbb' or linear [r, g, b]; `temperature_k` (800-20000) multiplies it with a blackbody tint.

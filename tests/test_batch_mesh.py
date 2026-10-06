@@ -336,4 +336,8 @@ call("unwrap", {"names": ["uv_target2", "uv_tool2"]})
 call("boolean", {"a": "uv_target2", "b": "uv_tool2", "operation": "difference"})
 expect("boolean keeps the UV layer of a target that had one", len(bpy.data.objects["uv_target2"].data.uv_layers) == 1)
 
+bail = call("sweep", {"name": "bail", "arc": {"center": [0, 0, 0.2], "radius": 0.09, "plane": "XZ", "start_deg": 0, "end_deg": 180}, "radius": 0.005})
+expect("an arc sweep spans the diameter and rises by the radius", abs(bail["size"][0] - 0.19) < 0.002 and abs(bail["size"][2] - 0.095) < 0.002 and abs(bail["max"][2] - 0.295) < 0.002, bail)
+
+
 finish()

@@ -1421,8 +1421,9 @@ def mirror(name, axis="X", at=0.0, new_name=None):
     bmesh.ops.reverse_faces(bm, faces=bm.faces)
     bm.to_mesh(mesh)
     bm.free()
-    mesh.name = new_name or mirrored_name(name)
-    result = bpy.data.objects.new(mesh.name, mesh)
+    label = new_name or mirrored_name(name)
+    mesh.name = label
+    result = bpy.data.objects.new(label, mesh)
     result.location = origin
     link_new(result)
     for index, slot in enumerate(source.material_slots):
@@ -1494,10 +1495,11 @@ def delete(names=None, with_children=False, prefix=None, lights=None):
             child.matrix_world = world
             unparented.append(child.name)
     for obj in targets:
-        light = obj.data if obj.type == "LIGHT" else None
+        data, kind = obj.data, obj.type
         bpy.data.objects.remove(obj)
-        if light is not None and light.users == 0:
-            bpy.data.lights.remove(light)
+        # An orphan datablock keeps its name, so a later object with that name would get a .001 suffix.
+        if data is not None and data.users == 0 and kind in ("LIGHT", "MESH", "CAMERA"):
+            {"LIGHT": bpy.data.lights, "MESH": bpy.data.meshes, "CAMERA": bpy.data.cameras}[kind].remove(data)
     bpy.context.view_layer.update()
     result = {"removed": removed}
     if unparented:

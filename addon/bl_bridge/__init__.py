@@ -51,6 +51,9 @@ def pump():
                 continue
             result = handlers.call(job.request["method"], job.request.get("params", {}))
             job.response = {"ok": True, "result": result}
+        except ValueError as error:
+            # A refusal is a message for the agent; the traceback only costs context.
+            job.response = {"ok": False, "error": f"{error}"}
         except Exception:
             job.response = {"ok": False, "error": traceback.format_exc(limit=4)}
         job.done.set()

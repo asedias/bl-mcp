@@ -490,10 +490,28 @@ def lathe(name, profile, axis="Z", segments=24, angle=360.0, at=(0, 0, 0), cap=F
     return describe(result)
 
 
+def arc_points(arc):
+    """World points of an arc in a plane; angles count from the first axis of the plane, counter-clockwise."""
+    missing = [k for k in ("center", "radius") if k not in arc]
+    if missing:
+        raise ValueError(f"arc needs {missing}: {{center, radius, plane ('XZ', 'XY' or 'YZ'), start_deg, end_deg, points}}")
+    plane = str(arc.get("plane", "XZ")).upper()
+    planes = {"XY": ((1, 0, 0), (0, 1, 0)), "XZ": ((1, 0, 0), (0, 0, 1)), "YZ": ((0, 1, 0), (0, 0, 1))}
+    if plane not in planes:
+        raise ValueError("arc plane is XY, XZ or YZ")
+    u, v = (Vector(a) for a in planes[plane])
+    start, end = float(arc.get("start_deg", 0)), float(arc.get("end_deg", 180))
+    count = max(3, int(arc.get("points", 24)))
+    centre, r = Vector(arc["center"]), float(arc["radius"])
+    return [centre + r * (math.cos(math.radians(start + (end - start) * i / (count - 1))) * u + math.sin(math.radians(start + (end - start) * i / (count - 1))) * v) for i in range(count)]
+
+
 @handler
-def sweep(name, path, radius=0.05, radii=None, sides=8, profile=None, closed=False, caps=True, up=(0, 0, 1)):
-    if len(path) < 2:
-        raise ValueError("A path needs at least 2 points")
+def sweep(name, path=None, radius=0.05, radii=None, sides=8, profile=None, closed=False, caps=True, up=(0, 0, 1), arc=None):
+    if arc is not None:
+        path = [list(p) for p in arc_points(arc)]
+    if not path or len(path) < 2:
+        raise ValueError("Give a path of at least 2 points, or an arc")
     pts = [Vector(p) for p in path]
     sizes = list(radii) if radii else [radius] * len(pts)
     if len(sizes) != len(pts):

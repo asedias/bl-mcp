@@ -235,4 +235,12 @@ call("text_mesh", {"text": "WHO", "size": 0.04, "depth": 0.004, "at": [0, -0.1, 
 call("set_camera", {"frame": ["slab"], "azimuth": 20, "elevation": 15})
 call("render_final", {"path": str(out / "text.png"), "size": 384, "samples": 32})
 
+call("add_light", {"kind": "spot", "name": "kept_spot", "location": [1, -2, 2], "look_at": [0, 0, 0.5], "power_w": 120, "color": "#ffe0c0", "spot_size_deg": 38, "blend": 0.3})
+updated = call("add_light", {"name": "kept_spot", "power_w": 70})
+before = call("list_lights", {})
+spot = next(l for l in before if l["name"] == "kept_spot")
+expect("an update keeps the colour", spot["color"] != [1.0, 1.0, 1.0] and spot["color"] == updated["color"], (spot["color"], updated["color"]))
+expect("an update keeps the cone, the place and changes the power", abs(spot["spot_size_deg"] - 38) < 0.01 and updated["power"] == 70 and updated["location"] == [1.0, -2.0, 2.0], updated)
+
+
 finish()

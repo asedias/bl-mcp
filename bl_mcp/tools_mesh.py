@@ -261,11 +261,14 @@ def lathe(name: str, profile: list[list[float]], axis: Axis = "Z", segments: int
 
 
 @mcp.tool()
-def sweep(name: str, path: list[Vec3], radius: float = 0.05, radii: list[float] | None = None, sides: int = 8, profile: list[list[float]] | None = None, closed: bool = False, caps: bool = True, up: Vec3 = (0, 0, 1)) -> str:
-    """Pull a cross-section along a path of world points: pipes, cables, railings, trims, horns, tails, roads. radii gives
-    one radius per point (a taper). profile is a closed 2D polygon [[right, up], ...] of the cross-section (default a
-    circle with `sides`); the frame turns smoothly along the path, `up` is the starting up direction."""
-    return text(call("sweep", name=name, path=[list(p) for p in path], radius=radius, radii=radii, sides=sides, profile=profile, closed=closed, caps=caps, up=list(up)))
+def sweep(name: str, path: list[Vec3] | None = None, radius: float = 0.05, radii: list[float] | None = None, sides: int = 8, profile: list[list[float]] | None = None, closed: bool = False, caps: bool = True, up: Vec3 = (0, 0, 1), arc: dict | None = None) -> str:
+    """Pull a cross-section along a path of world points: pipes, cables, railings, trims, horns, tails, roads. Instead of
+    `path`, `arc` gives a circular arc without computing points: {"center": [x, y, z], "radius": 0.09, "plane": "XZ",
+    "start_deg": 0, "end_deg": 180, "points": 24} (angles from the first axis of the plane, counter-clockwise; a bail
+    handle over X is plane XZ from 0 to 180). radii gives one radius per point (a taper). profile is a closed 2D polygon
+    [[right, up], ...] of the cross-section (default a circle with `sides`); the frame turns smoothly along the path,
+    `up` is the starting up direction."""
+    return text(call("sweep", name=name, path=path and [list(p) for p in path], arc=arc, radius=radius, radii=radii, sides=sides, profile=profile, closed=closed, caps=caps, up=list(up)))
 
 
 @mcp.tool()

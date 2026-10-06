@@ -308,4 +308,12 @@ call("shade", {"names": ["n_part"], "mode": "smooth"})
 expect("shade without the option removes the modifier", len(part.modifiers) == 0)
 refused("flat with weighted normals is refused", "shade", {"names": ["n_part"], "mode": "flat", "weighted_normals": True}, "weighted_normals")
 
+# a deleted object frees its name for a later copy
+cube("gone", (0.1, 0.1, 0.1), (6, 0, 0.05))
+cube("stay", (0.1, 0.1, 0.1), (6.3, 0, 0.05))
+call("delete", {"names": ["gone"]})
+copy = call("mirror", {"name": "stay", "axis": "X", "at": 6.15, "new_name": "gone"})
+expect("mirror reuses the name of a deleted object", copy["name"] == "gone", copy["name"])
+
+
 finish()

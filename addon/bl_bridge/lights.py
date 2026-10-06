@@ -57,6 +57,31 @@ def light_report(obj):
     return report
 
 
+def first(*values):
+    return next((v for v in values if v is not None), None)
+
+
+def kept_settings(data):
+    """The settings of an existing light, so an update keeps what the call omits."""
+    if data is None:
+        return {}
+    kind = next((k for k, v in LIGHT_KINDS.items() if v == data.type), None)
+    kept = {"kind": kind, "power_w": data.energy, "color": list(data.color), "shadow_soft": True}
+    if getattr(data, "use_temperature", False):
+        kept["temperature_k"] = data.temperature
+    if data.use_custom_distance:
+        kept["cutoff_m"] = data.cutoff_distance
+    if kind == "spot":
+        kept.update(spot_size_deg=math.degrees(data.spot_size), blend=data.spot_blend, radius=data.shadow_soft_size, shadow_soft=data.shadow_soft_size > 0)
+    elif kind == "point":
+        kept.update(radius=data.shadow_soft_size, shadow_soft=data.shadow_soft_size > 0)
+    elif kind == "area":
+        kept.update(size=[data.size, data.size_y])
+    elif kind == "sun":
+        kept["shadow_soft"] = data.angle > 0
+    return kept
+
+
 def light_object(name, kind):
     obj = bpy.data.objects.get(name)
     if obj is not None and obj.type != "LIGHT":
@@ -74,12 +99,26 @@ def light_object(name, kind):
 
 
 @handler
-def add_light(kind="spot", name="light", location=None, look_at=None, power_w=1000.0, color="#ffffff", spot_size_deg=45.0,
-              blend=0.15, radius=0.05, size=None, shadow_soft=True, temperature_k=None, cutoff_m=None):
-    if kind not in LIGHT_KINDS:
-        raise ValueError(f"Unknown kind {kind!r}. Known: {sorted(LIGHT_KINDS)}")
+def add_light(kind=None, name="light", location=None, look_at=None, power_w=None, color=None, spot_size_deg=None,
+              blend=None, radius=None, size=None, shadow_soft=None, temperature_k=None, cutoff_m=None):
     if name.startswith(LIGHT_PREFIX):
         raise ValueError(f"Names with the prefix {LIGHT_PREFIX!r} belong to setup_lighting and are deleted by it. Pick another name")
+    existing = bpy.data.objects.get(name)
+    old = existing.data if existing is not None and existing.type == "LIGHT" else None
+    kept = kept_settings(old)
+    kind = kind or kept.get("kind", "spot")
+    if kind not in LIGHT_KINDS:
+        raise ValueError(f"Unknown kind {kind!r}. Known: {sorted(LIGHT_KINDS)}")
+    same_kind = kept.get("kind") == kind
+    power_w = first(power_w, kept.get("power_w"), 1000.0)
+    color = first(color, kept.get("color"), "#ffffff")
+    spot_size_deg = first(spot_size_deg, kept.get("spot_size_deg") if same_kind else None, 45.0)
+    blend = first(blend, kept.get("blend") if same_kind else None, 0.15)
+    radius = first(radius, kept.get("radius") if same_kind else None, 0.05)
+    size = first(size, kept.get("size") if same_kind else None)
+    shadow_soft = first(shadow_soft, kept.get("shadow_soft"), True)
+    temperature_k = first(temperature_k, kept.get("temperature_k"))
+    cutoff_m = first(cutoff_m, kept.get("cutoff_m") if same_kind else None)
     if power_w < 0:
         raise ValueError("power_w must not be negative")
     if not 1 <= spot_size_deg <= 180:
@@ -97,12 +136,11 @@ def add_light(kind="spot", name="light", location=None, look_at=None, power_w=10
         shape = [float(size), float(size)] if isinstance(size, (int, float)) else [float(v) for v in size]
         if len(shape) != 2 or min(shape) <= 0:
             raise ValueError("size is [width, height] in metres, both positive")
-    existing = bpy.data.objects.get(name)
     if location is None and existing is None:
         location = [0, 0, 3]
     obj = light_object(name, LIGHT_KINDS[kind])
     data = obj.data
-    data.color = parse_color(color)[:3]
+    data.color = parse_color(color)[:3] if isinstance(color, str) else list(color)[:3]
     data.energy = power_w
     if hasattr(data, "use_temperature"):
         data.use_temperature = temperature_k is not None
